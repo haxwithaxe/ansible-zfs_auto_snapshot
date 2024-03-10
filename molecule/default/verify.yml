@@ -1,0 +1,68 @@
+---
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Assert tank/everything enabled
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "com.sun:auto-snapshot tank/everything \ttrue"
+        state: present
+      check_mode: yes
+      register: _enabled
+      failed_when: _enabled.changed or _enabled.failed
+
+    - name: Assert tank/everything frequent
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "com.sun:auto-snapshot.frequent tank/everything \ttrue"
+        state: present
+      check_mode: yes
+      register: _frequent
+      failed_when: _frequent.changed or _frequent.failed
+
+    - name: Assert tank/everything hourly
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "com.sun:auto-snapshot.hourly tank/everything \ttrue" 
+        state: present
+      check_mode: yes
+      register: _hourly
+      failed_when: _hourly.changed or _hourly.failed
+
+    - name: Assert tank/everything daily
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "com.sun:auto-snapshot.daily tank/everything \ttrue" 
+        state: present
+      check_mode: yes
+      register: _daily
+      failed_when: _daily.changed or _daily.failed
+
+    - name: Assert tank/everything weekly
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "com.sun:auto-snapshot.weekly tank/everything \ttrue" 
+        state: present
+      check_mode: yes
+      register: _weekly
+      failed_when: _weekly.changed or _weekly.failed
+
+    - name: Assert tank/everything monthly
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "com.sun:auto-snapshot.monthly tank/everything \ttrue"
+        state: present
+      check_mode: yes
+      register: _monthly
+      failed_when: _monthly.changed or _monthly.failed
+
+    - name: Assert tank/disabled
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "com.sun:auto-snapshot tank/disabled \tfalse"
+        state: present
+      check_mode: yes
+      register: _disabled
+      failed_when: _disabled.changed or _disabled.failed

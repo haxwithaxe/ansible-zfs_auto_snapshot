@@ -1,0 +1,33 @@
+---
+
+- name: Ensure the systemd directory exists
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /usr/local/lib/systemd/system
+
+- name: Set zfs-auto-snapshot properties
+  include_tasks: auto_snapshot.yml
+  loop: "{{ zfs_auto_snapshot_config | list }}"
+  loop_control:
+    loop_var: snapshot_config
+
+- name: Install zfs-auto-snapshot frequent cron job
+  template:
+    src: zfs-auto-snapshot.frequent.j2
+    dest: /etc/cron.d/zfs-auto-snapshot
+
+- name: Install zfs-auto-snapshot cron jobs
+  template:
+    src: zfs-auto-snapshot.j2
+    dest: /etc/cron.{{ item.label }}/zfs-auto-snapshot
+  loop:
+    - label: hourly
+      keep: "{{ zfs_auto_snapshot_hourly_keep }}"
+    - label: daily
+      keep: "{{ zfs_auto_snapshot_daily_keep }}"
+    - label: weekly
+      keep: "{{ zfs_auto_snapshot_weekly_keep }}"
+    - label: monthly
+      keep: "{{ zfs_auto_snapshot_monthly_keep }}"

@@ -1,0 +1,18 @@
+---
+
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include haxwithaxe.zfs_auto_snapshot"
+      vars:
+        zfs_auto_snapshot_config:
+          - name: tank/everything
+            frequent: yes
+            hourly: yes
+            daily: yes
+            weekly: yes
+            monthly: yes
+          - name: tank/disabled
+            disabled: yes
+      include_role:
+        name: "haxwithaxe.zfs_auto_snapshot"

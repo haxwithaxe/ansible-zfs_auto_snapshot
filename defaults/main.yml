@@ -1,0 +1,9 @@
+---
+
+zfs_auto_snapshot_frequent_interval: 15  # cron minute: */15
+zfs_auto_snapshot_frequent_keep: 4
+zfs_auto_snapshot_hourly_keep: 24 
+zfs_auto_snapshot_daily_keep: 7
+zfs_auto_snapshot_weekly_keep: 4
+zfs_auto_snapshot_monthly_keep: 3
+zfs_auto_snapshot_config: []

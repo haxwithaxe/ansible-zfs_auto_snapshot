@@ -1,0 +1,41 @@
+---
+
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Create cron directories
+      file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /etc/cron.d
+        - /etc/cron.hourly
+        - /etc/cron.daily
+        - /etc/cron.weekly
+        - /etc/cron.monthly
+
+    - name: Install mock zfs
+      copy:
+        content: |
+          #!/bin/bash
+          set -e
+          stash=/tmp/mock-zfs-stash
+          touch $stash
+          case $1 in
+            get)
+              grep -q "$2 $3" $stash || exit 0 && grep "$2 $3" $stash | cut -d ' ' -f 3
+              exit 0
+              ;;
+            set)
+              key="${2//=*/}"
+              value="${2//*=/}"
+              grep -q "$key $3" $stash && sed -i '/'"$key $3"'/d' $stash
+              echo -e "$key $3 \t$value" >> $stash
+              exit 0
+              ;;
+            *)
+              exit 42
+              ;;
+          esac
+        dest: /usr/sbin/zfs
+        mode: '0777'
