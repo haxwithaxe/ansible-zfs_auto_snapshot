@@ -1,5 +1,10 @@
 ---
 
+- name: Fail if {{ snapshot_config.name }} is not found
+  ansible.builtin.fail:
+    msg: "ZFS volume {{ snapshot_config.name }} not found"
+  when: snapshot_config.name not in zfs_auto_snapshot_volume_names_cmd.stdout_lines
+
 - name: Set snapshot_config variables
   tags: zfs_auto_snapshot
   set_fact:
@@ -10,29 +15,27 @@
     _weekly: "{{ snapshot_config.weekly | default(false) }}"
     _monthly: "{{ snapshot_config.monthly | default(false) }}"
 
-- name: "Check disabled {{ snapshot_config.name }}"
+- name: "Check enabled {{ snapshot_config.name }}"
   tags: zfs_auto_snapshot
-  shell: "zfs get com.sun:auto-snapshot {{ snapshot_config.name }} | grep -q '[ \t ]false'"
-  register: _is_enabled_false
+  shell: 
+    cmd: |
+      zfs get com.sun:auto-snapshot {{ snapshot_config.name }} \
+      | tail -n +2 \
+      | sed 's/[ \t]\+/ /g' \
+      | cut -d ' ' -f 3
+  register: _is_enabled_cmd
   changed_when: no
   failed_when: no
 
 - name: "Disable snapshots {{ snapshot_config.name }}"
   tags: zfs_auto_snapshot
   shell: "zfs set com.sun:auto-snapshot=false {{ snapshot_config.name }}"
-  when: _disabled and _is_enabled_false.rc != 0
-  
-- name: "Check enabled {{ snapshot_config.name }}"
-  tags: zfs_auto_snapshot
-  shell: "zfs get com.sun:auto-snapshot {{ snapshot_config.name }} | grep -q '[ \t ]true'"
-  register: _is_enabled_true
-  changed_when: no
-  failed_when: no
+  when: _disabled and _is_enabled_cmd.stdout != 'false'
 
 - name: "Enable snapshots {{ snapshot_config.name }}"
   tags: zfs_auto_snapshot
   shell: "zfs set com.sun:auto-snapshot=true {{ snapshot_config.name }}"
-  when: (_frequent or _hourly or _daily or _weekly or _monthly) and _is_enabled_true.rc != 0
+  when: (_frequent or _hourly or _daily or _weekly or _monthly) and _is_enabled_cmd.stdout != 'true' and not _disabled
 
 - name: "Check frequent {{ snapshot_config.name }}"
   tags: zfs_auto_snapshot

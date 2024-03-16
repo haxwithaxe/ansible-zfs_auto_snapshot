@@ -7,7 +7,7 @@
     - name: Assert tank/everything enabled
       lineinfile:
         path: /tmp/mock-zfs-stash
-        line: "com.sun:auto-snapshot tank/everything \ttrue"
+        line: "tank/everything com.sun:auto-snapshot \ttrue"
         state: present
       check_mode: yes
       register: _enabled
@@ -16,7 +16,7 @@
     - name: Assert tank/everything frequent
       lineinfile:
         path: /tmp/mock-zfs-stash
-        line: "com.sun:auto-snapshot.frequent tank/everything \ttrue"
+        line: "tank/everything com.sun:auto-snapshot.frequent \ttrue"
         state: present
       check_mode: yes
       register: _frequent
@@ -25,7 +25,7 @@
     - name: Assert tank/everything hourly
       lineinfile:
         path: /tmp/mock-zfs-stash
-        line: "com.sun:auto-snapshot.hourly tank/everything \ttrue" 
+        line: "tank/everything com.sun:auto-snapshot.hourly \ttrue" 
         state: present
       check_mode: yes
       register: _hourly
@@ -34,7 +34,7 @@
     - name: Assert tank/everything daily
       lineinfile:
         path: /tmp/mock-zfs-stash
-        line: "com.sun:auto-snapshot.daily tank/everything \ttrue" 
+        line: "tank/everything com.sun:auto-snapshot.daily \ttrue" 
         state: present
       check_mode: yes
       register: _daily
@@ -43,7 +43,7 @@
     - name: Assert tank/everything weekly
       lineinfile:
         path: /tmp/mock-zfs-stash
-        line: "com.sun:auto-snapshot.weekly tank/everything \ttrue" 
+        line: "tank/everything com.sun:auto-snapshot.weekly \ttrue" 
         state: present
       check_mode: yes
       register: _weekly
@@ -52,17 +52,26 @@
     - name: Assert tank/everything monthly
       lineinfile:
         path: /tmp/mock-zfs-stash
-        line: "com.sun:auto-snapshot.monthly tank/everything \ttrue"
+        line: "tank/everything com.sun:auto-snapshot.monthly \ttrue"
         state: present
       check_mode: yes
       register: _monthly
       failed_when: _monthly.changed or _monthly.failed
 
-    - name: Assert tank/disabled
+    - name: Assert tank/disabled disabled
       lineinfile:
         path: /tmp/mock-zfs-stash
-        line: "com.sun:auto-snapshot tank/disabled \tfalse"
+        line: "tank/disabled com.sun:auto-snapshot \tfalse"
         state: present
       check_mode: yes
       register: _disabled
       failed_when: _disabled.changed or _disabled.failed
+
+    - name: Assert swimming disabled
+      lineinfile:
+        path: /tmp/mock-zfs-stash
+        line: "swimming com.sun:auto-snapshot \tfalse"
+        state: present
+      check_mode: yes
+      register: _swimming
+      failed_when: _swimming.changed or _swimming.failed

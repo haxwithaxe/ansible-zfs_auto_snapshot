@@ -14,6 +14,27 @@
         - /etc/cron.weekly
         - /etc/cron.monthly
 
+    - name: Install mock zpool
+      copy:
+        content: |
+          #!/bin/bash
+          set -e
+          stash=/tmp/mock-zfs-stash
+          touch $stash
+          case $1 in
+            list)
+              echo HEADER LINE
+              echo tank junk from here to EOL
+              echo swimming junk from here to EOL
+              exit 0
+              ;;
+            *)
+              exit 42
+              ;;
+          esac
+        dest: /usr/sbin/zpool
+        mode: '0777'
+
     - name: Install mock zfs
       copy:
         content: |
@@ -23,14 +44,24 @@
           touch $stash
           case $1 in
             get)
-              grep -q "$2 $3" $stash || exit 0 && grep "$2 $3" $stash | cut -d ' ' -f 3
+              echo HEADER LINE
+              grep -q "$3 $2" $stash || (echo "$3 $2 -" && exit 0)
+              grep "$3 $2 " $stash
               exit 0
               ;;
             set)
               key="${2//=*/}"
               value="${2//*=/}"
-              grep -q "$key $3" $stash && sed -i '/'"$key $3"'/d' $stash
-              echo -e "$key $3 \t$value" >> $stash
+              grep -q "$3 $key" $stash && sed -i '/'"$3 $key"'/d' $stash
+              echo -e "$3 $key \t$value" >> $stash
+              exit 0
+              ;;
+            list)
+              echo HEADER LINE
+              echo tank junk from here to EOL
+              echo tank/everything junk from here to EOL
+              echo tank/disabled junk from here to EOL
+              echo swimming junk from here to EOL
               exit 0
               ;;
             *)
