@@ -1,5 +1,5 @@
-Role Name
-=========
+zfs-auto-snapshot
+=================
 
 Setup ZFS automatic snapshots using `zfs-auto-snapshot`.
 
