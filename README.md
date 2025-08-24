@@ -1,4 +1,4 @@
-zfs-auto-snapshot
+zfs_auto_snapshot
 =================
 
 Setup ZFS automatic snapshots using `zfs-auto-snapshot`.
