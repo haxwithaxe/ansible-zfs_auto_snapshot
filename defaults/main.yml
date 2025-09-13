@@ -1,6 +1,7 @@
 ---
 
 zfs_auto_snapshot_disabled_by_default: yes
+zfs_auto_snapshot_cmd_executable: /bin/bash
 zfs_auto_snapshot_frequent_interval: 15  # cron minute: */15
 zfs_auto_snapshot_frequent_keep: 4
 zfs_auto_snapshot_hourly_keep: 24 

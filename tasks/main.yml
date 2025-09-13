@@ -1,54 +1,44 @@
 ---
 
-- name: Set auto-snapshot config
-  set_fact:
-    _zfs_auto_snapshot_config: "{{ zfs_auto_snapshot_config | default([]) }}"
-
-- name: Ensure the systemd directory exists
-  file:
-    path: "{{ item }}"
-    state: directory
-  with_items:
-    - /usr/local/lib/systemd/system
-
 - name: Get volume names
   ansible.builtin.shell:
-    cmd: 'zfs list | tail -n +2 | cut -d " " -f 1'
+    cmd: |
+      set -o pipefail
+      zfs list | tail -n +2 | cut -d " " -f 1
+    executable: "{{ zfs_auto_snapshot_cmd_executable }}"
   changed_when: no
   register: zfs_auto_snapshot_volume_names_cmd
 
 - name: Get pool names
   ansible.builtin.shell:
-    cmd: 'zpool list | tail -n +2 | cut -d " " -f 1'
+    cmd: |
+      set -o pipefail
+      zpool list | tail -n +2 | cut -d " " -f 1
+    executable: "{{ zfs_auto_snapshot_cmd_executable }}"
   changed_when: no
   register: zfs_auto_snapshot_pool_names_cmd
 
-- name: Disable auto-snapshots for all pools by default
-  vars:
-    zfs_auto_snapshot_not_configured: "map('extract', zfs_auto_snapshot_config, 'name')"
-  set_fact:
-    _zfs_auto_snapshot_config: "{{ _zfs_auto_snapshot_config
-      | default([]) + [{'name': item, 'disabled': true}] }}"
-  loop: "{{ zfs_auto_snapshot_pool_names_cmd.stdout_lines 
-    | difference(zfs_auto_snapshot_not_configured)
-    | list }}"
-  when: zfs_auto_snapshot_disabled_by_default
-
 - name: Set zfs-auto-snapshot properties
-  include_tasks: auto_snapshot.yml
-  loop: "{{ _zfs_auto_snapshot_config | list }}"
+  ansible.builtin.include_tasks: tasks/set_labels.yml
+  loop: "{{ zfs_auto_snapshot_config | list }}"
   loop_control:
     loop_var: snapshot_config
 
 - name: Install zfs-auto-snapshot frequent cron job
-  template:
+  ansible.builtin.template:
     src: zfs-auto-snapshot.frequent.j2
     dest: /etc/cron.d/zfs-auto-snapshot
+    mode: '0644'
+    owner: root
+    group: root
 
 - name: Install zfs-auto-snapshot cron jobs
-  template:
+  ansible.builtin.template:
     src: zfs-auto-snapshot.j2
     dest: /etc/cron.{{ item.label }}/zfs-auto-snapshot
+    mode: '0644'
+    owner: root
+    group: root
   loop:
     - label: hourly
       keep: "{{ zfs_auto_snapshot_hourly_keep }}"
@@ -58,5 +48,3 @@
       keep: "{{ zfs_auto_snapshot_weekly_keep }}"
     - label: monthly
       keep: "{{ zfs_auto_snapshot_monthly_keep }}"
-
-

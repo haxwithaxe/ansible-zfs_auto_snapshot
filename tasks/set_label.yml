@@ -1,0 +1,24 @@
+---
+
+- name: "Check state {{ item.label }} {{ snapshot_config.name }}"
+  ansible.builtin.shell: 
+    cmd: |
+      set -o pipefail
+      zfs get com.sun:auto-snapshot:{{ item.label }} {{ snapshot_config.name }} \
+      | tail -n +2 \
+      | sed 's/[ \t]\+/ /g' \
+      | cut -d ' ' -f 3
+    executable: "{{ zfs_auto_snapshot_cmd_executable }}"
+  register: _zfs_auto_snapshot_label_state_cmd
+  changed_when: no
+  failed_when: no
+
+- name: "Disable snapshots {{ item.label }} for {{ snapshot_config.name }}"
+  ansible.builtin.command: "zfs set com.sun:auto-snapshot:{{ item.label }}=false {{ snapshot_config.name }}"
+  changed_when: yes
+  when: not item.required_state and _zfs_auto_snapshot_label_state_cmd.stdout != 'false'
+
+- name: "Enable snapshots {{ snapshot_config.name }}"
+  ansible.builtin.command: "zfs set com.sun:auto-snapshot:{{ item.label }}=true {{ snapshot_config.name }}"
+  changed_when: yes
+  when: item.required_state and _zfs_auto_snapshot_label_state_cmd.stdout != 'true'

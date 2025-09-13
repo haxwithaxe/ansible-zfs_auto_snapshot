@@ -1,0 +1,54 @@
+---
+
+- name: Fail if {{ snapshot_config.name }} is not found
+  ansible.builtin.fail:
+    msg: "ZFS volume {{ snapshot_config.name }} not found"
+  when: snapshot_config.name not in zfs_auto_snapshot_volume_names_cmd.stdout_lines
+
+- name: Set snapshot_config variables
+  vars:
+      _frequent: "{{ snapshot_config.frequent | default(false) | bool }}"
+      _hourly: "{{ snapshot_config.hourly | default(false) | bool }}"
+      _daily: "{{ snapshot_config.daily | default(false) | bool }}"
+      _weekly: "{{ snapshot_config.weekly | default(false) | bool }}"
+      _monthly: "{{ snapshot_config.monthly | default(false) | bool }}"
+  ansible.builtin.set_fact:
+    _zfs_auto_snapshot_enabled: "{{ snapshot_config.enabled | default(false) | bool or _frequent or _hourly or _daily or _weekly or _monthly }}"
+
+- name: "Check state {{ snapshot_config.name }}"
+  ansible.builtin.shell: 
+    cmd: |
+      set -o pipefail
+      zfs get com.sun:auto-snapshot {{ snapshot_config.name }} \
+        | tail -n +2 \
+        | sed 's/[ \t]\+/ /g' \
+        | cut -d ' ' -f 3
+    executable: "{{ zfs_auto_snapshot_cmd_executable }}"
+  register: _zfs_auto_snapshot_label_state_cmd
+  changed_when: no
+  failed_when: no
+
+- name: "Disable snapshots {{ snapshot_config.name }}"
+  ansible.builtin.command: "zfs set com.sun:auto-snapshot=false {{ snapshot_config.name }}"
+  changed_when: yes
+  when: not _zfs_auto_snapshot_enabled and _zfs_auto_snapshot_label_state_cmd.stdout != 'false'
+
+- name: "Enable snapshots {{ snapshot_config.name }}"
+  ansible.builtin.command: "zfs set com.sun:auto-snapshot=true {{ snapshot_config.name }}"
+  changed_when: yes
+  when: _zfs_auto_snapshot_enabled and _zfs_auto_snapshot_label_state_cmd.stdout != 'true' 
+
+- name: "Set sublabels for {{ snapshot_config.name }}"
+  ansible.builtin.include_tasks:
+    file: tasks/set_label.yml
+  loop:
+    - label: frequent
+      required_state: "{{ snapshot_config.frequent | default(false) | bool }}"
+    - label: hourly
+      required_state: "{{ snapshot_config.hourly | default(false) | bool }}"
+    - label: daily
+      required_state: "{{ snapshot_config.daily | default(false) | bool }}"
+    - label: weekly
+      required_state: "{{ snapshot_config.weekly | default(false) | bool }}"
+    - label: monthly
+      required_state: "{{ snapshot_config.monthly | default(false) | bool }}"
